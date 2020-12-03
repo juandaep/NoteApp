@@ -18,13 +18,12 @@ import java.text.SimpleDateFormat
 import java.util.*
 
 class NoteAddUpdateActivity : AppCompatActivity(), View.OnClickListener {
-
     private var isEdit = false
     private var note: Note? = null
     private var position: Int = 0
     private lateinit var noteHelper: NoteHelper
 
-    companion object{
+    companion object {
         const val EXTRA_NOTE = "extra_note"
         const val EXTRA_POSITION = "extra_position"
         const val REQUEST_ADD = 100
@@ -62,6 +61,7 @@ class NoteAddUpdateActivity : AppCompatActivity(), View.OnClickListener {
                 edt_title.setText(it.title)
                 edt_description.setText(it.description)
             }
+
         } else {
             actionBarTitle = "Tambah"
             btnTitle = "Simpan"
@@ -71,6 +71,7 @@ class NoteAddUpdateActivity : AppCompatActivity(), View.OnClickListener {
         supportActionBar?.setDisplayHomeAsUpEnabled(true)
 
         btn_submit.text = btnTitle
+
         btn_submit.setOnClickListener(this)
     }
 
@@ -79,8 +80,11 @@ class NoteAddUpdateActivity : AppCompatActivity(), View.OnClickListener {
             val title = edt_title.text.toString().trim()
             val description = edt_description.text.toString().trim()
 
+            /*
+            Jika fieldnya masih kosong maka tampilkan error
+             */
             if (title.isEmpty()) {
-                edt_title.error = "Field cannot be blank"
+                edt_title.error = "Field can not be blank"
                 return
             }
 
@@ -91,21 +95,25 @@ class NoteAddUpdateActivity : AppCompatActivity(), View.OnClickListener {
             intent.putExtra(EXTRA_NOTE, note)
             intent.putExtra(EXTRA_POSITION, position)
 
+            // Gunakan contentvalues untuk menampung data
             val values = ContentValues()
             values.put(DatabaseContract.NoteColumns.TITLE, title)
             values.put(DatabaseContract.NoteColumns.DESCRIPTION, description)
 
+            /*
+            Jika merupakan edit maka setresultnya UPDATE, dan jika bukan maka setresultnya ADD
+            */
             if (isEdit) {
-                val result = noteHelper.update(note?.id.toString(), values).toLong()
+                val result = noteHelper.update(note?.id.toString(), values)
                 if (result > 0) {
                     setResult(RESULT_UPDATE, intent)
                     finish()
-                } else{
-                    Toast.makeText(this, "Gagal update data", Toast.LENGTH_SHORT).show()
+                } else {
+                    Toast.makeText(this@NoteAddUpdateActivity, "Gagal mengupdate data", Toast.LENGTH_SHORT).show()
                 }
             } else {
                 note?.date = getCurrentDate()
-                values.put(DATE, getCurrentDate())
+                values.put(DatabaseContract.NoteColumns.DATE, getCurrentDate())
                 val result = noteHelper.insert(values)
 
                 if (result > 0) {
@@ -113,7 +121,7 @@ class NoteAddUpdateActivity : AppCompatActivity(), View.OnClickListener {
                     setResult(RESULT_ADD, intent)
                     finish()
                 } else {
-                    Toast.makeText(this, "Gagal menambah data", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(this@NoteAddUpdateActivity, "Gagal menambah data", Toast.LENGTH_SHORT).show()
                 }
             }
         }
@@ -126,7 +134,6 @@ class NoteAddUpdateActivity : AppCompatActivity(), View.OnClickListener {
         return dateFormat.format(date)
     }
 
-    //override metode onCreateOptionsMenu untuk memanggil menu_form.xml.
     override fun onCreateOptionsMenu(menu: Menu): Boolean {
         if (isEdit) {
             menuInflater.inflate(R.menu.menu_form, menu)
@@ -146,6 +153,12 @@ class NoteAddUpdateActivity : AppCompatActivity(), View.OnClickListener {
         showAlertDialog(ALERT_DIALOG_CLOSE)
     }
 
+
+    /*
+    Konfirmasi dialog sebelum proses batal atau hapus
+    close = 10
+    deleteNote = 20
+     */
     private fun showAlertDialog(type: Int) {
         val isDialogClose = type == ALERT_DIALOG_CLOSE
         val dialogTitle: String
@@ -153,16 +166,15 @@ class NoteAddUpdateActivity : AppCompatActivity(), View.OnClickListener {
 
         if (isDialogClose) {
             dialogTitle = "Batal"
-            dialogMessage = "Apakah anda ingin membatalkan perubahan form?"
+            dialogMessage = "Apakah anda ingin membatalkan perubahan pada form?"
         } else {
             dialogMessage = "Apakah anda yakin ingin menghapus item ini?"
-            dialogTitle = "Hapus note"
+            dialogTitle = "Hapus Note"
         }
 
-        val alerDialogBuilder = AlertDialog.Builder(this)
-
-        alerDialogBuilder.setTitle(dialogTitle)
-        alerDialogBuilder
+        val alertDialogBuilder = AlertDialog.Builder(this)
+        alertDialogBuilder.setTitle(dialogTitle)
+        alertDialogBuilder
                 .setMessage(dialogMessage)
                 .setCancelable(false)
                 .setPositiveButton("Ya") { dialog, id ->
@@ -176,12 +188,12 @@ class NoteAddUpdateActivity : AppCompatActivity(), View.OnClickListener {
                             setResult(RESULT_DELETE, intent)
                             finish()
                         } else {
-                            Toast.makeText(this, "Gagal mengahapus data", Toast.LENGTH_SHORT).show()
+                            Toast.makeText(this@NoteAddUpdateActivity, "Gagal menghapus data", Toast.LENGTH_SHORT).show()
                         }
                     }
                 }
-                .setNegativeButton("Tidak") { dialog, id -> dialog.cancel()}
-        val alertDialog = alerDialogBuilder.create()
+                .setNegativeButton("Tidak") { dialog, id -> dialog.cancel() }
+        val alertDialog = alertDialogBuilder.create()
         alertDialog.show()
     }
 }
